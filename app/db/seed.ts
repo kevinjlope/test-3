@@ -86,16 +86,21 @@ const initialFlowers = [
 ];
 
 export async function seed() {
-  console.log('🌱 Starting database seeding...');
+  console.log('🌱 Checking database state...');
 
   try {
-    for (const flower of initialFlowers) {
-      // Check if product already exists by name
-      const results = await db.select().from(products).where(eq(products.name, flower.name)).all();
+    // Check if there are ANY products (including soft-deleted ones)
+    const existingProducts = await db.select().from(products).limit(1).all();
 
-      if (results.length === 0) {
-        console.log(`+ Inserting: ${flower.name}`);
-        
+    if (existingProducts.length > 0) {
+      console.log('⚠️ Database already has products. Skipping initial seed to preserve user data.');
+      return;
+    }
+
+    console.log('🌱 Starting initial database seeding...');
+    for (const flower of initialFlowers) {
+      console.log(`+ Inserting: ${flower.name}`);
+...
         await db.transaction((tx) => {
           const productId = crypto.randomUUID();
           
