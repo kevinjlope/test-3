@@ -1,5 +1,5 @@
 import type { MetaFunction, LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
-import { useLoaderData, Link, useFetcher } from "react-router";
+import { useLoaderData, Link, useFetcher, useSearchParams, useFetchers } from "react-router";
 import { MainLayout } from "~/components/layout/MainLayout";
 import { ProductCard } from "~/components/ProductCard";
 import { CatalogSearch } from "~/components/CatalogSearch";
@@ -10,6 +10,13 @@ import { Button } from "~/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 export const meta: MetaFunction = () => {
   return [
@@ -18,14 +25,24 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+interface ActionData {
+  success: boolean;
+  intent: "delete" | "restore";
+  productId: string;
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const search = url.searchParams.get("q") || undefined;
   const categories = url.searchParams.getAll("category") as Category[];
+  const sortBy = (url.searchParams.get("sortBy") as "name" | "price" | "createdAt") || undefined;
+  const sortOrder = (url.searchParams.get("sortOrder") as "asc" | "desc") || undefined;
 
   const products = await ProductService.getProducts({
     search,
     categories: categories.length > 0 ? categories : undefined,
+    sortBy,
+    sortOrder,
   });
 
   return { products };
@@ -51,28 +68,32 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function Home() {
   const { products } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher();
+  const fetchers = useFetchers();
+  const rootFetcher = useFetcher();
 
   useEffect(() => {
-    if (fetcher.data && fetcher.data.success) {
-      if (fetcher.data.intent === "delete") {
-        const productId = fetcher.data.productId;
-        toast.success("Product deleted", {
-          action: {
-            label: "Undo",
-            onClick: () => {
-              const formData = new FormData();
-              formData.append("intent", "restore");
-              formData.append("productId", productId);
-              fetcher.submit(formData, { method: "post" });
+    for (const fetcher of fetchers) {
+      const data = fetcher.data as ActionData | undefined;
+      if (data?.success) {
+        if (data.intent === "delete") {
+          toast.success("Product deleted", {
+            action: {
+              label: "Undo",
+              onClick: () => {
+                const formData = new FormData();
+                formData.append("intent", "restore");
+                formData.append("productId", data.productId);
+                rootFetcher.submit(formData, { method: "post" });
+              },
             },
-          },
-        });
-      } else if (fetcher.data.intent === "restore") {
-        toast.success("Product restored");
+            duration: 5000,
+          });
+        } else if (data.intent === "restore") {
+          toast.success("Product restored");
+        }
       }
     }
-  }, [fetcher.data]);
+  }, [fetchers, rootFetcher]);
 
   return (
     <MainLayout>
@@ -95,6 +116,10 @@ export default function Home() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <CatalogSearch />
           <CategoryFilter />
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">Sort by:</span>
+            <SortSelect />
+          </div>
         </div>
 
         {products.length > 0 ? (
@@ -119,5 +144,35 @@ export default function Home() {
         )}
       </div>
     </MainLayout>
+  );
+}
+
+function SortSelect() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sortBy = searchParams.get("sortBy") || "createdAt";
+  const sortOrder = searchParams.get("sortOrder") || "desc";
+
+  const handleSortChange = (value: string) => {
+    const [newSortBy, newSortOrder] = value.split("-");
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("sortBy", newSortBy);
+    newParams.set("sortOrder", newSortOrder);
+    setSearchParams(newParams, { replace: true });
+  };
+
+  return (
+    <Select value={`${sortBy}-${sortOrder}`} onValueChange={handleSortChange}>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Sort by" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="createdAt-desc">Newest First</SelectItem>
+        <SelectItem value="createdAt-asc">Oldest First</SelectItem>
+        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+        <SelectItem value="price-asc">Price (Low to High)</SelectItem>
+        <SelectItem value="price-desc">Price (High to Low)</SelectItem>
+      </SelectContent>
+    </Select>
   );
 }

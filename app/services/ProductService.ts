@@ -23,9 +23,17 @@ export const ProductService = {
   getProducts: cache(async (options: { 
     search?: string; 
     categories?: Category[]; 
-    includeDeleted?: boolean 
+    includeDeleted?: boolean;
+    sortBy?: "name" | "price" | "createdAt";
+    sortOrder?: "asc" | "desc";
   } = {}): Promise<ProductWithImages[]> => {
-    const { search, categories, includeDeleted = false } = options;
+    const { 
+      search, 
+      categories, 
+      includeDeleted = false, 
+      sortBy = "createdAt", 
+      sortOrder = "desc" 
+    } = options;
 
     const conditions = [];
     if (!includeDeleted) {
@@ -38,10 +46,19 @@ export const ProductService = {
       conditions.push(inArray(products.category, categories));
     }
 
+    let orderBy;
+    if (sortBy === "name") {
+      orderBy = sortOrder === "asc" ? asc(products.name) : desc(products.name);
+    } else if (sortBy === "price") {
+      orderBy = sortOrder === "asc" ? asc(products.priceCents) : desc(products.priceCents);
+    } else {
+      orderBy = sortOrder === "asc" ? asc(products.createdAt) : desc(products.createdAt);
+    }
+
     const results = await db.select()
       .from(products)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(products.createdAt));
+      .orderBy(orderBy);
 
     if (results.length === 0) return [];
 
