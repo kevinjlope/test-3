@@ -78,6 +78,7 @@ export function SortableImage({
         <div
           {...attributes}
           {...listeners}
+          data-testid="drag-handle"
           className="absolute top-2 left-2 flex h-8 w-8 cursor-grab items-center justify-center rounded-md bg-background/80 text-muted-foreground hover:text-foreground active:cursor-grabbing"
         >
           <GripVertical className="h-4 w-4" />
