@@ -64,6 +64,8 @@ The project includes a robust testing suite covering both logic and E2E flows:
 
 ## Technical Decisions
 
+For a deep dive into our architectural choices, trade-offs, and senior-level rationale, please refer to the **[Architecture Documentation](./ARCHITECTURE.md)**.
+
 - **React Router 7 Monolith:** Chosen for high velocity and framework-level data handling (loaders/actions) which simplifies optimistic UI.
 - **Service Layer Pattern:** Logic is isolated in `app/services/ProductService.ts` to keep routes lean and make the system testable and scalable.
 - **SQLite + Drizzle:** Perfect for this scope—extremely fast, zero-config, and type-safe.
