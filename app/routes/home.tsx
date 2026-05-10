@@ -122,11 +122,12 @@ export default function Home() {
           </div>
           <Button
             asChild
-            className="bg-emerald-600 hover:bg-emerald-700 flex flex-row items-center gap-2 whitespace-nowrap"
+            size="lg"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-sm"
           >
-            <Link to="/products/new">
+            <Link to="/products/new" className="flex items-center gap-2">
               <Plus className="h-4 w-4 shrink-0" />
-              <span>Add Product</span>
+              <span className="font-semibold">Add Product</span>
             </Link>
           </Button>
         </div>
