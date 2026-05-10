@@ -25,6 +25,7 @@ export const productImages = sqliteTable('product_images', {
   id: text('id').primaryKey().$defaultFn(() => uuidv4()),
   productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
   url: text('url').notNull(),
+  thumbUrl: text('thumb_url'),
   altText: text('alt_text').notNull(),
   displayOrder: integer('display_order').notNull(),
 });

@@ -2,41 +2,49 @@ import * as React from "react"
 import { type Product, type ProductImage } from "~/db/schema"
 import { Card, CardContent, CardFooter, CardHeader } from "~/components/ui/card"
 import { Badge } from "~/components/ui/badge"
-import { Button, buttonVariants } from "~/components/ui/button"
-import { Edit2, Trash2, AlertTriangle } from "lucide-react"
-import { Link, useFetcher } from "react-router"
-import { cn } from "~/lib/utils"
+import { Button } from "~/components/ui/button"
+import { Edit, Trash2, MoreVertical } from "lucide-react"
+import { Link, type FetcherWithComponents } from "react-router"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog"
+import { cn } from "~/lib/utils"
 
 interface ProductCardProps {
   product: Product & { images: ProductImage[] }
+  deleteFetcher: FetcherWithComponents<any>
 }
 
-const formatPrice = (cents: number) => {
+function formatCurrency(cents: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(cents / 100)
 }
 
-export const ProductCard = React.memo(function ProductCard({ product }: ProductCardProps) {
+export const ProductCard = React.memo(function ProductCard({ product, deleteFetcher }: ProductCardProps) {
   const primaryImage = product.images.slice().sort((a: ProductImage, b: ProductImage) => a.displayOrder - b.displayOrder)[0]
-  const fetcher = useFetcher()
-  const [isOpen, setIsOpen] = React.useState(false)
   
-  const isDeleting = fetcher.formData?.get("intent") === "delete" && 
-                     fetcher.formData?.get("productId") === product.id
+  const isDeleting = deleteFetcher.formData?.get("intent") === "delete" && 
+                     deleteFetcher.formData?.get("productId") === product.id
+
+  const [isOpen, setIsOpen] = React.useState(false)
 
   const handleDelete = () => {
-    fetcher.submit(
+    deleteFetcher.submit(
       { intent: "delete", productId: product.id },
       { method: "post" }
     )
@@ -48,89 +56,107 @@ export const ProductCard = React.memo(function ProductCard({ product }: ProductC
   }
 
   return (
-    <Card data-testid="product-card" className="overflow-hidden transition-all hover:shadow-md group">
+    <Card data-testid="product-card" className="overflow-hidden transition-all hover:shadow-md group flex flex-col h-full">
       <CardHeader className="p-0">
         <div className="aspect-square relative bg-muted">
           {primaryImage ? (
             <img
-              src={primaryImage.url}
+              src={primaryImage.thumbUrl || primaryImage.url}
               alt={primaryImage.altText}
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
-              decoding="async"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground text-xs">
               No Image
             </div>
           )}
-          <Badge className="absolute top-2 right-2 uppercase bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-none" variant="secondary">
+          <Badge className="absolute top-2 right-2 uppercase bg-background/80 backdrop-blur-xs text-[10px] h-5 border-none" variant="secondary">
             {product.category}
           </Badge>
           
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-            <Link 
-              to={`/products/${product.id}/edit`}
-              className={cn(buttonVariants({ size: "icon", variant: "secondary" }), "h-9 w-9")}
-            >
-              <Edit2 className="h-4 w-4" />
-              <span className="sr-only">Edit</span>
-            </Link>
-            
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogTrigger
-                render={
-                  <Button 
-                    size="icon" 
-                    variant="destructive" 
-                    className="h-9 w-9"
-                  />
-                }
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Delete</span>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader className="flex flex-col items-center text-center pt-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">
-                    <AlertTriangle className="h-6 w-6" />
-                  </div>
-                  <DialogTitle className="text-xl">Delete Product</DialogTitle>
-                  <DialogDescription className="text-balance text-muted-foreground">
-                    Are you sure you want to delete <span className="font-semibold text-foreground">{product.name}</span>? 
-                    This action will hide it from the catalog but you can undo it later.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="sm:justify-center gap-3 p-6 pt-2">
-                  <Button variant="ghost" onClick={() => setIsOpen(false)} className="flex-1 sm:flex-none">
-                    Cancel
-                  </Button>
-                  <Button variant="destructive" onClick={handleDelete} className="flex-1 sm:flex-none px-8">
-                    Confirm Delete
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg h-9 w-9">
+              <Link to={`/products/${product.id}/edit`}>
+                <Edit className="h-4 w-4" />
+                <span className="sr-only">Edit</span>
+              </Link>
+            </Button>
+            <Button variant="destructive" size="icon" className="rounded-full shadow-lg h-9 w-9" onClick={() => setIsOpen(true)}>
+              <Trash2 className="h-4 w-4" />
+              <span className="sr-only">Delete</span>
+            </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-1">
-          <h3 className="font-semibold leading-none tracking-tight group-hover:text-emerald-700 transition-colors">{product.name}</h3>
-          <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+      <CardContent className="p-4 flex-1">
+        <div className="flex justify-between items-start mb-1">
+          <h3 className="font-semibold text-base line-clamp-1 group-hover:text-primary transition-colors">
+            {product.name}
+          </h3>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="flex h-7 w-7 -mr-2 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground outline-hidden transition-colors"
+            >
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Actions</span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link to={`/products/${product.id}/edit`} className="flex items-center">
+                  <Edit className="mr-2 h-4 w-4" />
+                  <span>Edit</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-destructive focus:text-destructive"
+                onSelect={() => setIsOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+        <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2rem]">
+          {product.description}
+        </p>
       </CardContent>
-      <CardFooter className="flex items-center justify-between p-4 pt-0">
-        <div className="flex flex-col">
-          <span className="text-lg font-bold">
-            {formatPrice(product.priceCents)}
-            <span className="text-sm font-normal text-muted-foreground"> / {product.unitOfSale}</span>
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : "Out of stock"}
+      <CardFooter className="p-4 pt-0 mt-auto">
+        <div className="flex items-baseline justify-between w-full border-t pt-4">
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg font-bold text-foreground">
+              {formatCurrency(product.priceCents)}
+            </span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              / {product.unitOfSale}
+            </span>
+          </div>
+          <span className={cn(
+            "text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-tighter",
+            product.stockQuantity > 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+          )}>
+            {product.stockQuantity > 0 ? `${product.stockQuantity} stock` : "Out of stock"}
           </span>
         </div>
       </CardFooter>
+
+      <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move "{product.name}" to trash. You can undo this action within 5 seconds.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 })

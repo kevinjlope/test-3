@@ -8,6 +8,13 @@
       "when": 1778379970889,
       "tag": "0000_pink_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1778426722515,
+      "tag": "0001_add_thumb_url",
+      "breakpoints": true
     }
   ]
 }

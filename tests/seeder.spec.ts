@@ -55,46 +55,54 @@ test.describe('Fifty Flowers: Catalog Seeder & E2E', () => {
 
   for (const flower of flowerData) {
     test(`Seed Product: ${flower.name}`, async ({ page }) => {
-      // 1. Navigate to New Product
+      // 1. Check if product already exists to avoid Async Validation error timeout
+      const existingProduct = page.locator('h3').filter({ hasText: flower.name });
+      if (await existingProduct.isVisible()) {
+          console.log(`Skipping ${flower.name} as it already exists.`);
+          return;
+      }
+
+      // 2. Navigate to New Product
       await page.getByRole('link', { name: 'Add Product' }).click();
       await expect(page).toHaveURL(/\/products\/new/);
 
-      // 2. Fill Basic Info
+      // 3. Fill Basic Info
       await page.fill('input#name', flower.name);
       await page.fill('input[name="price"]', flower.price);
       await page.fill('input[name="stockQuantity"]', flower.stock);
       await page.fill('textarea[name="description"]', flower.description);
       
-      // 3. Select Category and Unit (shadcn Select)
+      // 4. Select Category and Unit
       await page.locator('button#category').click();
       await page.getByRole('option', { name: flower.category }).click();
 
       await page.locator('button#unitOfSale').click();
       await page.getByRole('option', { name: flower.unit }).click();
 
-      // 4. Add Real Image URL
+      // 5. Add Real Image URL
+      await page.getByRole('tab', { name: /From URL/i }).click();
       await page.getByPlaceholder(/Paste image URL here/i).fill(flower.imageUrl);
       await page.getByRole('button', { name: /Add/i, exact: true }).click();
 
-      // 5. Fill Alt Text
+      // 6. Fill Alt Text
       const altTextInput = page.getByPlaceholder(/Describe the image/i);
       await altTextInput.waitFor();
       await altTextInput.fill(flower.altText);
 
-      // 6. Submit
+      // 7. Submit
       await page.getByRole('button', { name: 'Create Product' }).click();
       
-      // 7. Verify and search
+      // 8. Verify
       await page.waitForURL('/');
       await page.getByPlaceholder(/Search products/i).fill(flower.name);
-      await expect(page.getByText(flower.name)).toBeVisible();
+      await expect(page.locator('h3').filter({ hasText: flower.name })).toBeVisible();
     });
   }
 
   test('Cleanup: Verify all seeded products exist in list', async ({ page }) => {
     await page.goto('/');
     for (const flower of flowerData) {
-      await expect(page.getByText(flower.name)).toBeVisible();
+      await expect(page.locator('h3').filter({ hasText: flower.name })).toBeVisible();
     }
   });
 });

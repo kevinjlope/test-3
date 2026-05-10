@@ -15,19 +15,21 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
   rectSortingStrategy,
 } from "@dnd-kit/sortable"
-import { Plus, Link as LinkIcon } from "lucide-react"
+import { Plus, Link as LinkIcon, Upload } from "lucide-react"
 import { SortableImage } from "./SortableImage"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 
-interface ImageItem {
+export interface ImageItem {
   id: string
   url: string
   altText: string
+  file?: File // For local uploads
+  previewUrl?: string // Temporary URL for display
 }
 
 interface ImageDropzoneProps {
@@ -38,6 +40,7 @@ interface ImageDropzoneProps {
 export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
   const [newUrl, setNewUrl] = React.useState("")
   const [activeId, setActiveId] = React.useState<string | null>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -56,7 +59,7 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
     })
   )
 
-  const handleAddImage = () => {
+  const handleAddUrlImage = () => {
     if (!newUrl) return
     try {
       new URL(newUrl)
@@ -67,7 +70,23 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
     }
   }
 
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return
+    const newItems: ImageItem[] = Array.from(files).map(file => ({
+      id: `new-${crypto.randomUUID()}`,
+      url: "", 
+      altText: "",
+      file,
+      previewUrl: URL.createObjectURL(file)
+    }))
+    onChange([...images, ...newItems])
+  }
+
   const handleRemoveImage = (id: string) => {
+    const item = images.find(img => img.id === id)
+    if (item?.previewUrl) {
+      URL.revokeObjectURL(item.previewUrl)
+    }
     onChange(images.filter((img) => img.id !== id))
   }
 
@@ -101,28 +120,77 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>Product Images</Label>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <LinkIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="url"
-              placeholder="Paste image URL here..."
-              className="pl-9"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  handleAddImage()
-                }
+        
+        <Tabs defaultValue="upload" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="upload" className="flex items-center gap-2 text-xs sm:text-sm">
+              <Upload className="h-4 w-4" />
+              Upload Files
+            </TabsTrigger>
+            <TabsTrigger value="url" className="flex items-center gap-2 text-xs sm:text-sm">
+              <LinkIcon className="h-4 w-4" />
+              From URL
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="upload" className="mt-0">
+            <div 
+              className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:border-muted-foreground/50 bg-muted/30 cursor-pointer"
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
               }}
-            />
-          </div>
-          <Button type="button" onClick={handleAddImage} variant="secondary">
-            <Plus className="mr-2 h-4 w-4" />
-            Add
-          </Button>
-        </div>
+              onDrop={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleFiles(e.dataTransfer.files)
+              }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
+              <p className="mb-1 text-sm font-medium text-center">
+                Click to upload or drag and drop
+              </p>
+              <p className="text-xs text-muted-foreground text-center">
+                PNG, JPG, WEBP up to 10MB
+              </p>
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                className="hidden" 
+                multiple 
+                accept="image/*"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="url" className="mt-0">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <LinkIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="url"
+                  placeholder="Paste image URL here..."
+                  className="pl-9 h-10"
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleAddUrlImage()
+                    }
+                  }}
+                />
+              </div>
+              <Button type="button" onClick={handleAddUrlImage} variant="secondary" className="h-10 px-4">
+                <Plus className="mr-2 h-4 w-4" />
+                Add
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+        
         <p className="text-[0.8rem] text-muted-foreground">
           Multiple images allowed. Drag to reorder. First image will be primary.
         </p>
@@ -141,7 +209,7 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
               <SortableImage
                 key={image.id}
                 id={image.id}
-                url={image.url}
+                url={image.previewUrl || image.url}
                 altText={image.altText}
                 onRemove={() => handleRemoveImage(image.id)}
                 onAltChange={(val) => handleAltChange(image.id, val)}
@@ -149,7 +217,7 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
               />
             ))}
             {images.length === 0 && (
-              <div className="col-span-full flex h-32 flex-col items-center justify-center rounded-lg border border-dashed text-muted-foreground">
+              <div className="col-span-full flex h-32 flex-col items-center justify-center rounded-lg border border-dashed text-muted-foreground bg-muted/10">
                 <p>No images added yet.</p>
               </div>
             )}
@@ -159,7 +227,7 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
           {activeImage ? (
             <SortableImage
               id={activeImage.id}
-              url={activeImage.url}
+              url={activeImage.previewUrl || activeImage.url}
               altText={activeImage.altText}
               onRemove={() => {}}
               onAltChange={() => {}}

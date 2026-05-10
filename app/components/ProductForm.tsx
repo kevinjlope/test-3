@@ -14,10 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select"
-import { ImageDropzone } from "./ImageDropzone"
+import { ImageDropzone, type ImageItem } from "./ImageDropzone"
 import { Loader2 } from "lucide-react"
 
-export const productSchema = z.object({
+// Strict schema for the form state, allows File objects
+export const productFormSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(80, "Name must be at most 80 characters"),
   price: z.coerce.number().min(0.01, "Price must be at least 0.01"),
   stockQuantity: z.coerce.number().int().min(0, "Stock must be a non-negative integer"),
@@ -26,12 +27,14 @@ export const productSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters").max(200, "Description must be at most 200 characters"),
   images: z.array(z.object({
     id: z.string(),
-    url: z.string().url("Invalid URL"),
+    url: z.string().optional(),
     altText: z.string().min(1, "Alt text is mandatory"),
+    file: z.any().optional(), // We handle File objects manually
+    previewUrl: z.string().optional(),
   })).min(1, "At least one image is required"),
 })
 
-export type ProductFormValues = z.infer<typeof productSchema>
+export type ProductFormValues = z.infer<typeof productFormSchema>
 
 interface ProductFormProps {
   initialValues?: Partial<ProductFormValues>
@@ -56,7 +59,7 @@ export function ProductForm({
     setValue,
     watch,
   } = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: "",
       price: 0,
@@ -168,7 +171,7 @@ export function ProductForm({
 
       <div className="space-y-4">
         <ImageDropzone
-          images={images}
+          images={images as ImageItem[]}
           onChange={(newImages) => setValue("images", newImages, { shouldValidate: true })}
         />
         {errors.images && (
@@ -177,7 +180,7 @@ export function ProductForm({
               {errors.images.root?.message || errors.images.message || "Image validation failed:"}
             </p>
             <ul className="mt-1 list-inside list-disc text-xs text-destructive">
-              {errors.images.map?.((error: any, index: number) => (
+              {Array.isArray(errors.images) && errors.images.map((error: any, index: number) => (
                 error && <li key={index}>Image #{index + 1}: {error.altText?.message || error.url?.message || "Invalid data"}</li>
               ))}
             </ul>

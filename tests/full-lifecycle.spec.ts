@@ -41,6 +41,8 @@ test.describe('Fifty Flowers: Full Product Lifecycle', () => {
     await page.locator('button#category').click();
     await page.getByRole('option', { name: 'Roses' }).click();
 
+    // Select URL Tab
+    await page.getByRole('tab', { name: /From URL/i }).click();
     const imageUrl = 'https://picsum.photos/seed/rose/800/600';
     await page.getByPlaceholder(/Paste image URL here/i).fill(imageUrl);
     await page.getByRole('button', { name: /Add/i, exact: true }).click();
@@ -76,7 +78,8 @@ test.describe('Fifty Flowers: Full Product Lifecycle', () => {
     
     // Custom Dialog confirmation
     await updatedCard.getByRole('button', { name: /Delete/i }).click();
-    await page.getByRole('button', { name: 'Confirm Delete' }).click();
+    // Button in AlertDialog is "Delete"
+    await page.getByRole('button', { name: /^Delete$/ }).click();
 
     // Verify it's gone from the main list (using h3 to be safe)
     await expect(page.locator('h3').filter({ hasText: updatedName })).not.toBeVisible();
@@ -99,6 +102,7 @@ test.describe('Fifty Flowers: Full Product Lifecycle', () => {
     await page.fill('input[name="stockQuantity"]', '10');
     await page.fill('textarea[name="description"]', 'Valid description here.');
     
+    await page.getByRole('tab', { name: /From URL/i }).click();
     await page.getByPlaceholder(/Paste image URL here/i).fill('https://picsum.photos/seed/test/400/300');
     await page.getByRole('button', { name: /Add/i, exact: true }).click();
     await page.getByPlaceholder(/Describe the image/i).fill('Alt text');

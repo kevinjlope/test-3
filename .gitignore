@@ -8,3 +8,7 @@ node_modules/
 *.db*
 .react-router/
 test-results/
+public/uploads/
+build/
+playwright-report/
+.env*

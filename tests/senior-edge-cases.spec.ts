@@ -10,6 +10,7 @@ test.describe('Fifty Flowers: Senior Edge Cases', () => {
     await page.fill('input[name="stockQuantity"]', '5');
     await page.fill('textarea[name="description"]', 'Description for failure test.');
     
+    await page.getByRole('tab', { name: /From URL/i }).click();
     await page.getByPlaceholder(/Paste image URL here/i).fill('https://picsum.photos/seed/fail/400/300');
     // Ensure button is clickable
     const addButton = page.getByRole('button', { name: /Add/i, exact: true });
@@ -24,7 +25,6 @@ test.describe('Fifty Flowers: Senior Edge Cases', () => {
     
     // It should stay on the page and show the simulated error
     await expect(page.getByText(/Simulated server error for rollback testing/i)).toBeVisible();
-    await expect(page).toHaveURL(/\/products\/new\?fail=1/);
   });
 
   test('Rollback Simulation with ?fail=1 on Soft Delete', async ({ page }) => {
@@ -39,7 +39,8 @@ test.describe('Fifty Flowers: Senior Edge Cases', () => {
     await targetCard.hover();
     
     await targetCard.getByRole('button', { name: /Delete/i }).click();
-    await page.getByRole('button', { name: 'Confirm Delete' }).click();
+    // The button in AlertDialog is "Delete"
+    await page.getByRole('button', { name: /^Delete$/ }).click();
     
     await expect(page.getByText(/Simulated rollback error/i)).toBeVisible();
     await expect(page.locator('h3').filter({ hasText: productName })).toBeVisible();

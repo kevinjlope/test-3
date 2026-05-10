@@ -78,33 +78,37 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function Home() {
   const { products } = useLoaderData<typeof loader>();
   const fetchers = useFetchers();
-  const rootFetcher = useFetcher();
+  const deleteFetcher = useFetcher();
+  const restoreFetcher = useFetcher();
 
+  // Listen for deletions to show Undo toast
   useEffect(() => {
-    for (const fetcher of fetchers) {
-      const data = fetcher.data as ActionData | any;
-      if (data?.success) {
-        if (data.intent === "delete") {
-          toast.success("Product deleted", {
-            action: {
-              label: "Undo",
-              onClick: () => {
-                const formData = new FormData();
-                formData.append("intent", "restore");
-                formData.append("productId", data.productId);
-                rootFetcher.submit(formData, { method: "post" });
-              },
-            },
-            duration: 5000,
-          });
-        } else if (data.intent === "restore") {
-          toast.success("Product restored");
-        }
-      } else if (data?.success === false && data?.error) {
-        toast.error(data.error);
-      }
+    const data = deleteFetcher.data as ActionData | any;
+    if (data?.success && data.intent === "delete") {
+      toast.success("Product moved to trash", {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            restoreFetcher.submit(
+              { intent: "restore", productId: data.productId },
+              { method: "post" }
+            );
+          },
+        },
+        duration: 5000,
+      });
+    } else if (data?.success === false && data?.error) {
+      toast.error(data.error);
     }
-  }, [fetchers, rootFetcher]);
+  }, [deleteFetcher.data]);
+
+  // Listen for restores
+  useEffect(() => {
+    const data = restoreFetcher.data as ActionData | any;
+    if (data?.success && data.intent === "restore") {
+      toast.success("Product restored successfully");
+    }
+  }, [restoreFetcher.data]);
 
   return (
     <MainLayout>
@@ -137,7 +141,11 @@ export default function Home() {
         {products.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                deleteFetcher={deleteFetcher}
+              />
             ))}
           </div>
         ) : (
