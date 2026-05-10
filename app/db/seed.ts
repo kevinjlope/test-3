@@ -10,7 +10,7 @@ const initialFlowers = [
     category: 'roses',
     unit: 'bunch',
     description: 'The Freedom Red Rose is a classic choice for romance. These long-stemmed roses feature a deep, velvety red color and a high petal count.',
-    imageUrl: 'https://images.pexels.com/photos/15289/flower-red-rose-bloom.jpg?auto=compress&cs=tinysrgb&w=800',
+    imageUrl: 'https://bloomingmore.com/cdn/shop/products/Freedom_Red_Roses_Red_roses_Bloomingmore_B.jpg?v=1755121697',
     altText: 'Vibrant deep red Freedom roses bunch'
   },
   {
@@ -50,7 +50,7 @@ const initialFlowers = [
     category: 'roses',
     unit: 'bunch',
     description: 'A stunning sandy-peach rose that exudes elegance. Its muted tones make it a favorite for vintage-themed weddings and sophisticated events.',
-    imageUrl: 'https://images.pexels.com/photos/56866/garden-rose-rose-red-flower-56866.jpeg?auto=compress&cs=tinysrgb&w=800',
+    imageUrl: 'https://srfcc.com/wp-content/uploads/2021/04/25-SAHARA-SENSATION_1.png',
     altText: 'Elegant peach-colored Sahara roses'
   },
   {
