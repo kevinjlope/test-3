@@ -105,11 +105,12 @@ export default function Home() {
               Manage your flower catalog, stock, and pricing.
             </p>
           </div>
-          <Button asChild className="bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center gap-2">
-            <Link to="/products/new">
-              <Plus className="h-4 w-4" />
-              <span>Add Product</span>
-            </Link>
+          <Button
+            render={<Link to="/products/new" />}
+            className="bg-emerald-600 hover:bg-emerald-700 flex flex-row items-center gap-2 whitespace-nowrap"
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            <span>Add Product</span>
           </Button>
         </div>
 
