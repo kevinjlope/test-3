@@ -17,19 +17,9 @@ import {
 
 const items = [
   {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-  },
-  {
     title: "All Products",
-    url: "/products",
+    url: "/",
     icon: ShoppingBasket,
-  },
-  {
-    title: "Categories",
-    url: "/categories",
-    icon: Tags,
   },
 ]
 
