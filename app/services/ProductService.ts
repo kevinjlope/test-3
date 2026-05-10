@@ -9,7 +9,7 @@ import {
   type NewProductImage,
   type Category
 } from '../db/schema';
-import { eq, and, isNull, like, inArray, desc, asc } from 'drizzle-orm';
+import { eq, and, isNull, like, inArray, desc, asc, sql, ne } from 'drizzle-orm';
 
 export interface ProductWithImages extends Product {
   images: ProductImage[];
@@ -147,6 +147,23 @@ export const ProductService = {
         images: finalImages
       };
     });
+  },
+
+  /**
+   * Check if a product name is already taken.
+   */
+  checkNameUniqueness: async (name: string, excludeId?: string): Promise<boolean> => {
+    const conditions = [eq(products.name, name)];
+    if (excludeId) {
+      conditions.push(ne(products.id, excludeId));
+    }
+    
+    const [existing] = await db.select()
+      .from(products)
+      .where(and(...conditions))
+      .limit(1);
+    
+    return !existing;
   },
 
   /**

@@ -13,6 +13,8 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/drizzle ./drizzle
+COPY --from=builder /app/app/db ./app/db
 # Ensure data directory exists for SQLite
 RUN mkdir -p /app/data
 
@@ -20,4 +22,4 @@ ENV NODE_ENV=production
 ENV DATABASE_URL=/app/data/products.db
 
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npm run db:migrate && npm start"]

@@ -17,7 +17,7 @@ import {
 import { ImageDropzone } from "./ImageDropzone"
 import { Loader2 } from "lucide-react"
 
-const productSchema = z.object({
+export const productSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(80, "Name must be at most 80 characters"),
   price: z.coerce.number().min(0.01, "Price must be at least 0.01"),
   stockQuantity: z.coerce.number().int().min(0, "Stock must be a non-negative integer"),

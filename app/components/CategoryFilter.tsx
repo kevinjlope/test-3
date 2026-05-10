@@ -59,42 +59,44 @@ export function CategoryFilter() {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-10 border-dashed">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Categories
-          {selectedCategories.size > 0 && (
-            <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge
-                variant="secondary"
-                className="rounded-sm px-1 font-normal lg:hidden"
-              >
-                {selectedCategories.size}
-              </Badge>
-              <div className="hidden space-x-1 lg:flex">
-                {selectedCategories.size > 2 ? (
+      <PopoverTrigger
+        className={cn(
+          "inline-flex h-10 items-center justify-center rounded-lg border border-dashed border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+        )}
+      >
+        <PlusCircle className="mr-2 h-4 w-4" />
+        Categories
+        {selectedCategories.size > 0 && (
+          <>
+            <Separator orientation="vertical" className="mx-2 h-4" />
+            <Badge
+              variant="secondary"
+              className="rounded-sm px-1 font-normal lg:hidden"
+            >
+              {selectedCategories.size}
+            </Badge>
+            <div className="hidden space-x-1 lg:flex">
+              {selectedCategories.size > 2 ? (
+                <Badge
+                  variant="secondary"
+                  className="rounded-sm px-1 font-normal"
+                >
+                  {selectedCategories.size} selected
+                </Badge>
+              ) : (
+                Array.from(selectedCategories).map((category) => (
                   <Badge
                     variant="secondary"
+                    key={category}
                     className="rounded-sm px-1 font-normal"
                   >
-                    {selectedCategories.size} selected
+                    {category}
                   </Badge>
-                ) : (
-                  Array.from(selectedCategories).map((category) => (
-                    <Badge
-                      variant="secondary"
-                      key={category}
-                      className="rounded-sm px-1 font-normal"
-                    >
-                      {category}
-                    </Badge>
-                  ))
-                )}
-              </div>
-            </>
-          )}
-        </Button>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
         <Command>

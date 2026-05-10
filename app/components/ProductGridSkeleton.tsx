@@ -1,6 +1,6 @@
 import * as React from "react"
-import { Skeleton } from "app/components/ui/skeleton"
-import { Card, CardContent, CardFooter, CardHeader } from "app/components/ui/card"
+import { Skeleton } from "~/components/ui/skeleton"
+import { Card, CardContent, CardFooter, CardHeader } from "~/components/ui/card"
 
 export function ProductGridSkeleton() {
   return (

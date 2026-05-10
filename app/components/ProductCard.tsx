@@ -1,10 +1,11 @@
 import * as React from "react"
-import { type Product, type ProductImage } from "app/db/schema"
-import { Card, CardContent, CardFooter, CardHeader } from "app/components/ui/card"
-import { Badge } from "app/components/ui/badge"
-import { Button } from "app/components/ui/button"
+import { type Product, type ProductImage } from "~/db/schema"
+import { Card, CardContent, CardFooter, CardHeader } from "~/components/ui/card"
+import { Badge } from "~/components/ui/badge"
+import { Button, buttonVariants } from "~/components/ui/button"
 import { Edit2, Trash2 } from "lucide-react"
 import { Link, useFetcher } from "react-router"
+import { cn } from "~/lib/utils"
 
 interface ProductCardProps {
   product: Product & { images: ProductImage[] }
@@ -50,12 +51,13 @@ export const ProductCard = React.memo(function ProductCard({ product }: ProductC
           </Badge>
           
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-            <Button asChild size="icon" variant="secondary" className="h-9 w-9">
-              <Link to={`/products/${product.id}/edit`}>
-                <Edit2 className="h-4 w-4" />
-                <span className="sr-only">Edit</span>
-              </Link>
-            </Button>
+            <Link 
+              to={`/products/${product.id}/edit`}
+              className={cn(buttonVariants({ size: "icon", variant: "secondary" }), "h-9 w-9")}
+            >
+              <Edit2 className="h-4 w-4" />
+              <span className="sr-only">Edit</span>
+            </Link>
             <Button 
               size="icon" 
               variant="destructive" 

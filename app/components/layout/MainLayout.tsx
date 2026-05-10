@@ -1,7 +1,7 @@
 import * as React from "react"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "app/components/ui/sidebar"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar"
 import { AppSidebar } from "./AppSidebar"
-import { Separator } from "app/components/ui/separator"
+import { Separator } from "~/components/ui/separator"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,10 +9,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "app/components/ui/breadcrumb"
-
-// Note: breadcrumb component might not be added yet, I should add it.
-// For now I will use a simple one or add it.
+} from "~/components/ui/breadcrumb"
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,7 +23,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Catalog</BreadcrumbLink>
+                  <BreadcrumbLink href="/">Catalog</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
