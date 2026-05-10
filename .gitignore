@@ -7,3 +7,4 @@ skills-lock.json
 docs/
 
 node_modules/
+*.db*
