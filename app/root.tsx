@@ -7,6 +7,8 @@ import {
 } from "react-router";
 import type { LinksFunction } from "react-router";
 
+import { Toaster } from "sonner";
+
 import "./app.css";
 
 export const links: LinksFunction = () => [
@@ -33,6 +35,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster closeButton position="top-right" />
         <ScrollRestoration />
         <Scripts />
       </body>

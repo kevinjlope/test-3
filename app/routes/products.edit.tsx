@@ -1,0 +1,99 @@
+import { type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "react-router"
+import { ProductService } from "~/services/ProductService"
+import { ProductForm, type ProductFormValues } from "~/components/ProductForm"
+import { MainLayout } from "~/components/layout/MainLayout"
+import { useLoaderData, useSubmit, useNavigation } from "react-router"
+
+export async function loader({ params }: LoaderFunctionArgs) {
+  const { id } = params
+  if (!id) throw new Error("Product ID is required")
+
+  const product = await ProductService.getProductById(id)
+  if (!product) {
+    throw new Response("Product Not Found", { status: 404 })
+  }
+
+  return { product }
+}
+
+export async function action({ request, params }: ActionFunctionArgs) {
+  const { id } = params
+  if (!id) throw new Error("Product ID is required")
+
+  const formData = await request.formData()
+  const data = JSON.parse(formData.get("data") as string) as ProductFormValues
+
+  try {
+    const productData = {
+      name: data.name,
+      priceCents: Math.round(data.price * 100),
+      stockQuantity: data.stockQuantity,
+      unitOfSale: data.unitOfSale,
+      category: data.category,
+      description: data.description,
+    }
+
+    const imagesData = data.images.map((img, index) => ({
+      url: img.url,
+      altText: img.altText,
+      displayOrder: index,
+    }))
+
+    await ProductService.updateProduct(id, productData, imagesData)
+    return redirect("/")
+  } catch (error: any) {
+    return { error: error.message || "Failed to update product" }
+  }
+}
+
+export default function EditProductPage() {
+  const { product } = useLoaderData<typeof loader>()
+  const submit = useSubmit()
+  const navigation = useNavigation()
+  const isSubmitting = navigation.state === "submitting"
+
+  const handleSubmit = (values: ProductFormValues) => {
+    submit(
+      { data: JSON.stringify(values) },
+      { method: "post" }
+    )
+  }
+
+  const initialValues: ProductFormValues = {
+    name: product.name,
+    price: product.priceCents / 100,
+    stockQuantity: product.stockQuantity,
+    unitOfSale: product.unitOfSale,
+    category: product.category,
+    description: product.description,
+    images: product.images.map(img => ({
+      id: img.id,
+      url: img.url,
+      altText: img.altText
+    })).sort((a, b) => {
+      const imgA = product.images.find(i => i.id === a.id)
+      const imgB = product.images.find(i => i.id === b.id)
+      return (imgA?.displayOrder || 0) - (imgB?.displayOrder || 0)
+    })
+  }
+
+  return (
+    <MainLayout>
+      <div className="mx-auto max-w-4xl py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Edit Product</h1>
+          <p className="text-muted-foreground">Update the details for "{product.name}".</p>
+        </div>
+
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <ProductForm
+            initialValues={initialValues}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            submitLabel="Update Product"
+          />
+        </div>
+      </div>
+    </MainLayout>
+  )
+}

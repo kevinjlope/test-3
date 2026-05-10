@@ -152,7 +152,7 @@ export const ProductService = {
   /**
    * Soft delete a product.
    */
-  softDeleteProduct: async (id: string): Promise<void> => {
+  softDelete: async (id: string): Promise<void> => {
     await db.update(products)
       .set({ deletedAt: new Date() })
       .where(eq(products.id, id));
@@ -161,7 +161,7 @@ export const ProductService = {
   /**
    * Restore a soft-deleted product.
    */
-  restoreProduct: async (id: string): Promise<void> => {
+  restore: async (id: string): Promise<void> => {
     await db.update(products)
       .set({ deletedAt: null })
       .where(eq(products.id, id));
