@@ -110,7 +110,7 @@ export const ProductCard = React.memo(function ProductCard({ product, deleteFetc
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-destructive focus:text-destructive"
-                onSelect={() => setIsOpen(true)}
+                onClick={() => setIsOpen(true)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 <span>Delete</span>

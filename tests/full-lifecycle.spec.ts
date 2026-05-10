@@ -92,6 +92,27 @@ test.describe('Fifty Flowers: Full Product Lifecycle', () => {
     }
   });
 
+  test('Delete via Dropdown Menu (3 dots)', async ({ page }) => {
+    const productName = 'Freedom Red Roses';
+    
+    // 1. Find product
+    await page.getByPlaceholder(/Search products/i).fill(productName);
+    const card = page.locator('[data-testid="product-card"]').filter({ hasText: productName });
+    await expect(card).toBeVisible();
+
+    // 2. Open Dropdown
+    await card.getByRole('button', { name: /Actions/i }).click();
+    
+    // 3. Click Delete in Dropdown
+    await page.getByRole('menuitem', { name: /Delete/i }).click();
+
+    // 4. Confirm in AlertDialog
+    await page.getByRole('button', { name: /^Delete$/ }).click();
+
+    // 5. Verify deletion
+    await expect(page.locator('h3').filter({ hasText: productName })).not.toBeVisible();
+  });
+
   test('Form Edge Cases: Async Validation & Uniqueness', async ({ page }) => {
     // Ensure we have a product to collide with
     const existingName = "Freedom Red Roses";

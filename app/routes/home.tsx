@@ -121,11 +121,13 @@ export default function Home() {
             </p>
           </div>
           <Button
-            render={<Link to="/products/new" />}
+            asChild
             className="bg-emerald-600 hover:bg-emerald-700 flex flex-row items-center gap-2 whitespace-nowrap"
           >
-            <Plus className="h-4 w-4 shrink-0" />
-            <span>Add Product</span>
+            <Link to="/products/new">
+              <Plus className="h-4 w-4 shrink-0" />
+              <span>Add Product</span>
+            </Link>
           </Button>
         </div>
 
