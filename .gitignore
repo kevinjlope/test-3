@@ -1,10 +1,10 @@
+
+
 .vscode
-
 .agents
-
 skills-lock.json
-
 docs/
-
 node_modules/
 *.db*
+.react-router/
+test-results/
