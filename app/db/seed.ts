@@ -1,6 +1,7 @@
 import { db } from './client';
 import { products, productImages } from './schema';
 import { eq } from 'drizzle-orm';
+import crypto from 'node:crypto';
 
 const initialFlowers = [
   {
@@ -10,7 +11,7 @@ const initialFlowers = [
     category: 'roses',
     unit: 'bunch',
     description: 'The Freedom Red Rose is a classic choice for romance. These long-stemmed roses feature a deep, velvety red color and a high petal count.',
-    imageUrl: 'https://bloomingmore.com/cdn/shop/products/Freedom_Red_Roses_Red_roses_Bloomingmore_B.jpg?v=1755121697',
+    imageUrl: 'https://images.pexels.com/photos/15289/flower-red-rose-bloom.jpg?auto=compress&cs=tinysrgb&w=800',
     altText: 'Vibrant deep red Freedom roses bunch'
   },
   {
@@ -50,7 +51,7 @@ const initialFlowers = [
     category: 'roses',
     unit: 'bunch',
     description: 'A stunning sandy-peach rose that exudes elegance. Its muted tones make it a favorite for vintage-themed weddings and sophisticated events.',
-    imageUrl: 'https://srfcc.com/wp-content/uploads/2021/04/25-SAHARA-SENSATION_1.png',
+    imageUrl: 'https://images.pexels.com/photos/56866/garden-rose-rose-red-flower-56866.jpeg?auto=compress&cs=tinysrgb&w=800',
     altText: 'Elegant peach-colored Sahara roses'
   },
   {
@@ -86,23 +87,18 @@ const initialFlowers = [
 ];
 
 export async function seed() {
-  console.log('🌱 Checking database state...');
+  console.log('🌱 Starting database seeding...');
 
   try {
-    // Check if there are ANY products (including soft-deleted ones)
-    const existingProducts = await db.select().from(products).limit(1).all();
-
-    if (existingProducts.length > 0) {
-      console.log('⚠️ Database already has products. Skipping initial seed to preserve user data.');
-      return;
-    }
-
-    console.log('🌱 Starting initial database seeding...');
     for (const flower of initialFlowers) {
-      console.log(`+ Inserting: ${flower.name}`);
-...
-        await db.transaction((tx) => {
-          const productId = crypto.randomUUID();
+      // Check if product already exists by name
+      const results = await db.select().from(products).where(eq(products.name, flower.name)).all();
+
+      if (results.length === 0) {
+        console.log(`+ Inserting: ${flower.name}`);
+        
+        db.transaction((tx) => {
+          const productId = (crypto as any).randomUUID?.() || crypto.randomBytes(16).toString('hex');
           
           tx.insert(products).values({
             id: productId,
@@ -115,7 +111,7 @@ export async function seed() {
           }).run();
 
           tx.insert(productImages).values({
-            id: crypto.randomUUID(),
+            id: (crypto as any).randomUUID?.() || crypto.randomBytes(16).toString('hex'),
             productId: productId,
             url: flower.imageUrl,
             altText: flower.altText,
@@ -130,6 +126,7 @@ export async function seed() {
     console.log('✅ Seeding complete.');
   } catch (error) {
     console.error('❌ Seeding failed:', error);
+    throw error; // Rethrow to ensure the process exits with 1
   }
 }
 

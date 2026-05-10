@@ -3,7 +3,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
-const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
+const UPLOADS_DIR = process.env.UPLOADS_PATH || path.join(process.cwd(), 'public', 'uploads');
 const FULL_DIR = path.join(UPLOADS_DIR, 'full');
 const THUMB_DIR = path.join(UPLOADS_DIR, 'thumb');
 
