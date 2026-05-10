@@ -105,10 +105,10 @@ export default function Home() {
               Manage your flower catalog, stock, and pricing.
             </p>
           </div>
-          <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
+          <Button asChild className="bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center gap-2">
             <Link to="/products/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
+              <Plus className="h-4 w-4" />
+              <span>Add Product</span>
             </Link>
           </Button>
         </div>
@@ -147,10 +147,20 @@ export default function Home() {
   );
 }
 
+const SORT_OPTIONS = [
+  { value: "createdAt-desc", label: "Newest First" },
+  { value: "createdAt-asc", label: "Oldest First" },
+  { value: "name-asc", label: "Name (A-Z)" },
+  { value: "name-desc", label: "Name (Z-A)" },
+  { value: "price-asc", label: "Price (Low to High)" },
+  { value: "price-desc", label: "Price (High to Low)" },
+];
+
 function SortSelect() {
   const [searchParams, setSearchParams] = useSearchParams();
   const sortBy = searchParams.get("sortBy") || "createdAt";
   const sortOrder = searchParams.get("sortOrder") || "desc";
+  const currentValue = `${sortBy}-${sortOrder}`;
 
   const handleSortChange = (value: string) => {
     const [newSortBy, newSortOrder] = value.split("-");
@@ -161,17 +171,18 @@ function SortSelect() {
   };
 
   return (
-    <Select value={`${sortBy}-${sortOrder}`} onValueChange={handleSortChange}>
+    <Select value={currentValue} onValueChange={handleSortChange}>
       <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Sort by" />
+        <SelectValue>
+          {SORT_OPTIONS.find(opt => opt.value === currentValue)?.label}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="createdAt-desc">Newest First</SelectItem>
-        <SelectItem value="createdAt-asc">Oldest First</SelectItem>
-        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-        <SelectItem value="price-asc">Price (Low to High)</SelectItem>
-        <SelectItem value="price-desc">Price (High to Low)</SelectItem>
+        {SORT_OPTIONS.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
