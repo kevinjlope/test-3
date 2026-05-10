@@ -13,17 +13,17 @@ test.describe('Fifty Flowers: Advanced Features', () => {
     
     await page.locator('[data-slot="select-item"]').filter({ hasText: 'Price (Low to High)' }).click();
     
-    // Wait for URL and some time for re-render
     await page.waitForURL(/sortBy=price&sortOrder=asc/);
     await page.waitForTimeout(1000); 
     
-    // Get all prices to verify order
-    const priceLocators = page.locator('[data-testid="product-card"] span').filter({ hasText: '$' });
+    const priceLocators = page.locator('[data-testid="product-card"]').locator('span').filter({ hasText: '$' });
     const prices = await priceLocators.allInnerTexts();
-    const numericPrices = prices.map(p => parseFloat(p.replace('$', '')));
+    const numericPrices = prices.map(p => {
+      const match = p.match(/\d+\.\d+/);
+      return match ? parseFloat(match[0]) : 0;
+    }).filter(p => p > 0);
     
     expect(numericPrices.length).toBeGreaterThan(0);
-    // Sort verification: numericPrices should be non-decreasing
     const sortedPrices = [...numericPrices].sort((a, b) => a - b);
     expect(numericPrices).toEqual(sortedPrices);
 
@@ -41,6 +41,7 @@ test.describe('Fifty Flowers: Advanced Features', () => {
   });
 
   test('Persistence of Image Reordering', async ({ page }) => {
+    // We'll use a product we know exists from initial seeding
     const productName = 'Freedom Red Roses';
     
     await page.getByPlaceholder(/Search products/i).fill(productName);
@@ -49,25 +50,19 @@ test.describe('Fifty Flowers: Advanced Features', () => {
     await card.hover();
     await card.getByRole('link', { name: /Edit/i }).click();
     
-    // Wait for the edit page to load
-    await expect(page.getByText(/Edit Product/i)).toBeVisible();
+    // Use specific locator for h1
+    await expect(page.locator('h1', { hasText: 'Edit Product' })).toBeVisible();
 
-    // Ensure we have at least 2 images by checking the drag handles
     let handleCount = await page.getByTestId('drag-handle').count();
     
     if (handleCount < 2) {
       const secondImageUrl = 'https://picsum.photos/seed/reorder3/800/600';
       await page.getByPlaceholder(/Paste image URL here/i).fill(secondImageUrl);
       await page.getByRole('button', { name: /Add/i, exact: true }).click();
-      
-      // Wait for the new image handle to appear
       await expect(page.getByTestId('drag-handle')).toHaveCount(handleCount + 1);
-      
-      // Fill the Alt Text for the NEWLY added image (it's the last one)
       await page.getByPlaceholder(/Describe the image/i).last().fill('Second Test Image');
     }
 
-    // Perform Drag and Drop with manual mouse movements for dnd-kit
     const handles = page.getByTestId('drag-handle');
     const firstHandle = handles.nth(0);
     const secondHandle = handles.nth(1);
@@ -75,7 +70,6 @@ test.describe('Fifty Flowers: Advanced Features', () => {
     const firstImg = page.locator('img').nth(0);
     const srcBefore = await firstImg.getAttribute('src');
 
-    // Trigger drag and drop
     const firstBox = await firstHandle.boundingBox();
     const secondBox = await secondHandle.boundingBox();
 
@@ -88,11 +82,9 @@ test.describe('Fifty Flowers: Advanced Features', () => {
     
     await page.waitForTimeout(1000); 
 
-    // 4. Save Changes
     await page.getByRole('button', { name: /Update Product/i }).click();
     await page.waitForURL('/');
 
-    // 5. Verify Persistence
     await page.getByPlaceholder(/Search products/i).fill(productName);
     await card.hover();
     await card.getByRole('link', { name: /Edit/i }).click();

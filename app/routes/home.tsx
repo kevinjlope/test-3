@@ -49,6 +49,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const url = new URL(request.url);
+  const shouldFail = url.searchParams.get("fail") === "1";
+  
+  if (shouldFail) {
+    // Artificial delay to see optimistic UI rollback
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return { success: false, error: "Simulated rollback error", intent: "delete" };
+  }
+
   const formData = await request.formData();
   const intent = formData.get("intent");
   const productId = formData.get("productId") as string;
@@ -73,7 +82,7 @@ export default function Home() {
 
   useEffect(() => {
     for (const fetcher of fetchers) {
-      const data = fetcher.data as ActionData | undefined;
+      const data = fetcher.data as ActionData | any;
       if (data?.success) {
         if (data.intent === "delete") {
           toast.success("Product deleted", {
@@ -91,6 +100,8 @@ export default function Home() {
         } else if (data.intent === "restore") {
           toast.success("Product restored");
         }
+      } else if (data?.success === false && data?.error) {
+        toast.error(data.error);
       }
     }
   }, [fetchers, rootFetcher]);

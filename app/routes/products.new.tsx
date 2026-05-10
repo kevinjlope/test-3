@@ -6,6 +6,15 @@ import { toast } from "sonner"
 import { useSubmit, useNavigation } from "react-router"
 
 export async function action({ request }: ActionFunctionArgs) {
+  const url = new URL(request.url)
+  const shouldFail = url.searchParams.get("fail") === "1"
+  
+  if (shouldFail) {
+    // Artificial delay to see optimistic UI
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return { error: "Simulated server error for rollback testing" }
+  }
+
   const formData = await request.formData()
   const rawData = JSON.parse(formData.get("data") as string)
 
