@@ -22,4 +22,4 @@ ENV NODE_ENV=production
 ENV DATABASE_URL=/app/data/products.db
 
 EXPOSE 3000
-CMD ["sh", "-c", "npm run db:migrate && npm start"]
+CMD ["sh", "-c", "npm run db:migrate && npm run db:seed && npm start"]
