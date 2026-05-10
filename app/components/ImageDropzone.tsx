@@ -1,12 +1,15 @@
 import * as React from "react"
 import {
   DndContext,
-  closestCenter,
+  closestCorners,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
+  DragOverlay,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core"
 import {
   arrayMove,
@@ -34,9 +37,20 @@ interface ImageDropzoneProps {
 
 export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
   const [newUrl, setNewUrl] = React.useState("")
+  const [activeId, setActiveId] = React.useState<string | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -63,15 +77,25 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
     )
   }
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
+    console.log('Drag End:', { activeId: active.id, overId: over?.id });
+    setActiveId(null)
 
     if (over && active.id !== over.id) {
       const oldIndex = images.findIndex((img) => img.id === active.id)
       const newIndex = images.findIndex((img) => img.id === over.id)
-      onChange(arrayMove(images, oldIndex, newIndex))
+      console.log('Moving from', oldIndex, 'to', newIndex);
+      const newImages = arrayMove(images, oldIndex, newIndex);
+      onChange(newImages)
     }
   }
+
+  const activeImage = activeId ? images.find(img => img.id === activeId) : null
 
   return (
     <div className="space-y-4">
@@ -106,8 +130,10 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveId(null)}
       >
         <SortableContext items={images.map((img) => img.id)} strategy={rectSortingStrategy}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -119,6 +145,7 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
                 altText={image.altText}
                 onRemove={() => handleRemoveImage(image.id)}
                 onAltChange={(val) => handleAltChange(image.id, val)}
+                isDragging={activeId === image.id}
               />
             ))}
             {images.length === 0 && (
@@ -128,6 +155,18 @@ export function ImageDropzone({ images, onChange }: ImageDropzoneProps) {
             )}
           </div>
         </SortableContext>
+        <DragOverlay adjustScale={true}>
+          {activeImage ? (
+            <SortableImage
+              id={activeImage.id}
+              url={activeImage.url}
+              altText={activeImage.altText}
+              onRemove={() => {}}
+              onAltChange={() => {}}
+              isOverlay
+            />
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </div>
   )

@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, redirect } from "react-router"
+import { type ActionFunctionArgs, redirect, useActionData } from "react-router"
 import { ProductService } from "~/services/ProductService"
 import { ProductForm, productSchema, type ProductFormValues } from "~/components/ProductForm"
 import { MainLayout } from "~/components/layout/MainLayout"
@@ -37,8 +37,8 @@ export async function action({ request }: ActionFunctionArgs) {
     await ProductService.createProduct(productData, imagesData)
     return redirect("/")
   } catch (error: any) {
-    if (error.name === "ZodError") {
-      return { error: error.errors[0].message }
+    if (error.name === "ZodError" && error.issues && error.issues.length > 0) {
+      return { error: error.issues[0].message }
     }
     return { error: error.message || "Failed to create product" }
   }
@@ -47,6 +47,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function NewProductPage() {
   const submit = useSubmit()
   const navigation = useNavigation()
+  const actionData = useActionData<{ error?: string }>()
   const isSubmitting = navigation.state === "submitting"
 
   const handleSubmit = (values: ProductFormValues) => {
@@ -69,6 +70,7 @@ export default function NewProductPage() {
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             submitLabel="Create Product"
+            serverError={actionData?.error}
           />
         </div>
       </div>

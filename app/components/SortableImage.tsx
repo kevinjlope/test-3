@@ -1,9 +1,10 @@
-import { useSortable } from "@dnd-kit/sortable"
+import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { GripVertical, X } from "lucide-react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
+import { cn } from "~/lib/utils"
 
 interface SortableImageProps {
   id: string
@@ -11,30 +12,50 @@ interface SortableImageProps {
   altText: string
   onRemove: () => void
   onAltChange: (value: string) => void
+  isDragging?: boolean
+  isOverlay?: boolean
 }
 
-export function SortableImage({ id, url, altText, onRemove, onAltChange }: SortableImageProps) {
+export function SortableImage({ 
+  id, 
+  url, 
+  altText, 
+  onRemove, 
+  onAltChange,
+  isDragging,
+  isOverlay 
+}: SortableImageProps) {
+  const animateLayoutChanges = (args: any) =>
+    defaultAnimateLayoutChanges({ ...args, wasDragging: true });
+
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-    isDragging,
-  } = useSortable({ id })
+  } = useSortable({ 
+    id,
+    animateLayoutChanges
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 10 : 0,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0 : 1,
+    zIndex: isOverlay ? 100 : 0,
+    position: 'relative' as const,
   }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="relative flex flex-col gap-2 rounded-lg border bg-card p-3 shadow-sm"
+      className={cn(
+        "relative flex flex-col gap-2 rounded-lg border bg-card p-3 shadow-sm",
+        isOverlay && "shadow-xl border-primary ring-2 ring-primary/20",
+        isDragging && !isOverlay && "invisible"
+      )}
     >
       <div className="group relative aspect-video overflow-hidden rounded-md bg-muted">
         <img
@@ -64,9 +85,9 @@ export function SortableImage({ id, url, altText, onRemove, onAltChange }: Sorta
         </div>
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor={`alt-${id}`} className="text-xs">Alt Text (Mandatory)</Label>
+        <Label htmlFor={`alt-${id}-${isOverlay ? 'overlay' : 'base'}`} className="text-xs">Alt Text (Mandatory)</Label>
         <Input
-          id={`alt-${id}`}
+          id={`alt-${id}-${isOverlay ? 'overlay' : 'base'}`}
           value={altText}
           onChange={(e) => onAltChange(e.target.value)}
           placeholder="Describe the image..."

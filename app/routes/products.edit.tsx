@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "react-router"
+import { type LoaderFunctionArgs, type ActionFunctionArgs, redirect, useActionData } from "react-router"
 import { ProductService } from "~/services/ProductService"
 import { ProductForm, productSchema, type ProductFormValues } from "~/components/ProductForm"
 import { MainLayout } from "~/components/layout/MainLayout"
@@ -50,8 +50,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
     await ProductService.updateProduct(id, productData, imagesData)
     return redirect("/")
   } catch (error: any) {
-    if (error.name === "ZodError") {
-      return { error: error.errors[0].message }
+    if (error.name === "ZodError" && error.issues && error.issues.length > 0) {
+      return { error: error.issues[0].message }
     }
     return { error: error.message || "Failed to update product" }
   }
@@ -61,6 +61,7 @@ export default function EditProductPage() {
   const { product } = useLoaderData<typeof loader>()
   const submit = useSubmit()
   const navigation = useNavigation()
+  const actionData = useActionData<{ error?: string }>()
   const isSubmitting = navigation.state === "submitting"
 
   const handleSubmit = (values: ProductFormValues) => {
@@ -102,6 +103,7 @@ export default function EditProductPage() {
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             submitLabel="Update Product"
+            serverError={actionData?.error}
           />
         </div>
       </div>

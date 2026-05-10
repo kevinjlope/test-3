@@ -38,6 +38,7 @@ interface ProductFormProps {
   onSubmit: (values: ProductFormValues) => void
   isSubmitting?: boolean
   submitLabel?: string
+  serverError?: string | null
 }
 
 export function ProductForm({
@@ -45,6 +46,7 @@ export function ProductForm({
   onSubmit,
   isSubmitting = false,
   submitLabel = "Save Product",
+  serverError,
 }: ProductFormProps) {
   const {
     register,
@@ -169,14 +171,30 @@ export function ProductForm({
           images={images}
           onChange={(newImages) => setValue("images", newImages, { shouldValidate: true })}
         />
-        {errors.images && <p className="text-sm text-destructive">{errors.images.message}</p>}
+        {errors.images && (
+          <div className="rounded-md bg-destructive/10 p-3">
+            <p className="text-sm font-medium text-destructive">
+              {errors.images.root?.message || errors.images.message || "Image validation failed:"}
+            </p>
+            <ul className="mt-1 list-inside list-disc text-xs text-destructive">
+              {errors.images.map?.((error: any, index: number) => (
+                error && <li key={index}>Image #{index + 1}: {error.altText?.message || error.url?.message || "Invalid data"}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
-      <div className="flex justify-end gap-4">
-        <Button type="submit" disabled={isSubmitting} size="lg">
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {submitLabel}
-        </Button>
+      <div className="flex flex-col gap-4">
+        {serverError && (
+          <p className="text-sm font-medium text-destructive text-right">{serverError}</p>
+        )}
+        <div className="flex justify-end gap-4">
+          <Button type="submit" disabled={isSubmitting} size="lg">
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {submitLabel}
+          </Button>
+        </div>
       </div>
     </form>
   )

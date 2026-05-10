@@ -58,7 +58,8 @@ export const ProductService = {
     const results = await db.select()
       .from(products)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(orderBy);
+      .orderBy(orderBy)
+      .all();
 
     if (results.length === 0) return [];
 
@@ -66,7 +67,8 @@ export const ProductService = {
     const allImages = await db.select()
       .from(productImages)
       .where(inArray(productImages.productId, productIds))
-      .orderBy(asc(productImages.displayOrder));
+      .orderBy(asc(productImages.displayOrder))
+      .all();
 
     const imagesByProductId = allImages.reduce((acc, img) => {
       if (!acc[img.productId]) acc[img.productId] = [];
@@ -85,17 +87,21 @@ export const ProductService = {
    * Uses React.cache for per-request deduplication.
    */
   getProductById: cache(async (id: string): Promise<ProductWithImages | null> => {
-    const [product] = await db.select()
+    const results = await db.select()
       .from(products)
       .where(eq(products.id, id))
-      .limit(1);
+      .limit(1)
+      .all();
+
+    const product = results[0];
 
     if (!product) return null;
 
     const images = await db.select()
       .from(productImages)
       .where(eq(productImages.productId, id))
-      .orderBy(asc(productImages.displayOrder));
+      .orderBy(asc(productImages.displayOrder))
+      .all();
 
     return {
       ...product,
@@ -110,16 +116,24 @@ export const ProductService = {
     productData: NewProduct, 
     imagesData: Omit<NewProductImage, 'productId' | 'id'>[]
   ): Promise<ProductWithImages> => {
-    return await db.transaction(async (tx) => {
-      const [newProduct] = await tx.insert(products)
+    return db.transaction((tx) => {
+      const results = tx.insert(products)
         .values(productData)
-        .returning();
+        .returning()
+        .all();
+      
+      const [newProduct] = results;
+
+      if (!newProduct) {
+        throw new Error('Failed to create product record');
+      }
 
       let insertedImages: ProductImage[] = [];
       if (imagesData.length > 0) {
-        insertedImages = await tx.insert(productImages)
+        insertedImages = tx.insert(productImages)
           .values(imagesData.map(img => ({ ...img, productId: newProduct.id })))
-          .returning();
+          .returning()
+          .all();
       }
 
       return {
@@ -137,27 +151,32 @@ export const ProductService = {
     productData: Partial<NewProduct>, 
     imagesData?: Omit<NewProductImage, 'productId' | 'id'>[]
   ): Promise<ProductWithImages | null> => {
-    return await db.transaction(async (tx) => {
-      const [updatedProduct] = await tx.update(products)
+    return db.transaction((tx) => {
+      const results = tx.update(products)
         .set({ ...productData, updatedAt: new Date() })
         .where(eq(products.id, id))
-        .returning();
+        .returning()
+        .all();
+      
+      const [updatedProduct] = results;
 
       if (!updatedProduct) return null;
 
       if (imagesData) {
         // Clear existing images and replace with new set
-        await tx.delete(productImages).where(eq(productImages.productId, id));
+        tx.delete(productImages).where(eq(productImages.productId, id)).run();
         if (imagesData.length > 0) {
-          await tx.insert(productImages)
-            .values(imagesData.map(img => ({ ...img, productId: id })));
+          tx.insert(productImages)
+            .values(imagesData.map(img => ({ ...img, productId: id })))
+            .run();
         }
       }
 
-      const finalImages = await tx.select()
+      const finalImages = tx.select()
         .from(productImages)
         .where(eq(productImages.productId, id))
-        .orderBy(asc(productImages.displayOrder));
+        .orderBy(asc(productImages.displayOrder))
+        .all();
 
       return {
         ...updatedProduct,
@@ -175,12 +194,13 @@ export const ProductService = {
       conditions.push(ne(products.id, excludeId));
     }
     
-    const [existing] = await db.select()
+    const results = await db.select()
       .from(products)
       .where(and(...conditions))
-      .limit(1);
+      .limit(1)
+      .all();
     
-    return !existing;
+    return results.length === 0;
   },
 
   /**

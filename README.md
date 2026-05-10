@@ -52,6 +52,16 @@ A high-performance product management interface for Fifty Flowers' catalog. Buil
    npm run dev
    ```
 
+## Automated Testing
+
+The project includes a robust testing suite covering both logic and E2E flows:
+
+- **Unit Testing (Vitest):** Validates the Zod schema, including happy paths and edge cases (price validation, mandatory images, character limits).
+  - Run: `npm test`
+- **E2E Testing (Playwright):** Full lifecycle simulation (Create -> Search -> Edit -> Soft Delete -> Undo).
+  - Run: `npm run test:e2e` (Headless)
+  - Run: `npx playwright test --ui` (Interactive)
+
 ## Technical Decisions
 
 - **React Router 7 Monolith:** Chosen for high velocity and framework-level data handling (loaders/actions) which simplifies optimistic UI.
