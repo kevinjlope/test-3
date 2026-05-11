@@ -18,8 +18,9 @@ COPY --from=builder /app/app/db ./app/db
 # Ensure data directory exists for SQLite and Uploads
 RUN mkdir -p /app/data/uploads/full /app/data/uploads/thumb
 
-# Symlink persistent uploads to public folder for static serving
-RUN ln -s /app/data/uploads /app/public/uploads
+# Symlink persistent uploads to public folder and build/client for static serving
+RUN ln -s /app/data/uploads /app/public/uploads && \
+    ln -s /app/data/uploads /app/build/client/uploads
 
 ENV NODE_ENV=production
 ENV DATABASE_URL=/app/data/products.db
